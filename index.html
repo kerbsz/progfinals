@@ -871,13 +871,41 @@
             `;
         }
 
+        function normalizeText(value) {
+            return (value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+        }
+
+        function isDuplicateStudent(studentNo, name, excludeId = null) {
+            return state.students.some(student => {
+                if (excludeId && student.id === excludeId) return false;
+
+                const sameStudentNo = normalizeText(student.studentNo) === normalizeText(studentNo);
+                const sameName = normalizeText(student.name) === normalizeText(name);
+
+                return sameStudentNo || sameName;
+            });
+        }
+
         function handleUpdateStudent(e, id) {
             e.preventDefault();
             const student = state.students.find(s => s.id === id);
             if (!student) return;
 
-            student.name = document.getElementById('edit-name').value;
-            student.studentNo = document.getElementById('edit-stdno').value;
+            const updatedName = document.getElementById('edit-name').value.trim();
+            const updatedStudentNo = document.getElementById('edit-stdno').value.trim();
+
+            if (!updatedName || !updatedStudentNo) {
+                alert("Name and student number are required.");
+                return;
+            }
+
+            if (isDuplicateStudent(updatedStudentNo, updatedName, id)) {
+                alert("A student with the same student number or name already exists. Please use a different one.");
+                return;
+            }
+
+            student.name = updatedName;
+            student.studentNo = updatedStudentNo;
             student.email = document.getElementById('edit-email').value;
             student.program = document.getElementById('edit-program').value;
             student.hoursRendered = parseFloat(document.getElementById('edit-hours').value) || 0;
@@ -918,16 +946,26 @@
 
         function handleStudentRegistration(e) {
             e.preventDefault();
-            const name = document.getElementById('reg-name').value;
-            const studentNo = document.getElementById('reg-stdno').value;
+            const name = document.getElementById('reg-name').value.trim();
+            const studentNo = document.getElementById('reg-stdno').value.trim();
             const email = document.getElementById('reg-email').value;
             const totalRequired = parseFloat(document.getElementById('reg-total-hours').value) || 486;
             const program = document.getElementById('reg-program').value;
             const password = document.getElementById('reg-pass').value;
             const confirmPassword = document.getElementById('reg-pass-confirm').value;
 
+            if (!name || !studentNo) {
+                alert("Name and student number are required.");
+                return;
+            }
+
             if (password !== confirmPassword) {
                 alert("Passwords do not match! Please verify your password confirmation.");
+                return;
+            }
+
+            if (isDuplicateStudent(studentNo, name)) {
+                alert("A student with the same student number or name already exists. Please use a different one.");
                 return;
             }
 
