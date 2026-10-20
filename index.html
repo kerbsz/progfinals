@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="shortcut icon" href="cdm transparent logo.png" type="image/x-icon">
+    <link rel="icon" href="./cdm%20transparent%20logo.png" type="image/png">
     <title>Colegio de Montalban - OJT & Work Immersion Attendance System</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -49,7 +49,7 @@
                 <!-- CDM Logo & Title -->
                 <div class="flex items-center space-x-3 cursor-pointer" onclick="router.navigate('home')">
                     <div class="bg-white rounded-full p-1 shadow flex items-center justify-center w-12 h-12 overflow-hidden">
-                        <img src="cdm transparent logo.png" alt="Colegio de Montalban logo" class="w-10 h-10 object-cover rounded-full">
+                        <img src="./cdm%20transparent%20logo.png" alt="Colegio de Montalban logo" class="w-10 h-10 object-cover rounded-full">
                     </div>
                     <div>
                         <h1 class="font-extrabold text-base sm:text-xl tracking-wide uppercase">COLEGIO DE MONTALBAN</h1>
@@ -325,7 +325,7 @@
                     <form onsubmit="handleStudentLogin(event)" class="space-y-4">
                         <div>
                             <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Student Number</label>
-                            <input type="text" id="login-stdno" required placeholder="CDM-2024-XXXX or 26-10177" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-forest focus:outline-none">
+                            <input type="text" id="login-stdno" required placeholder="26-10177" class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-forest focus:outline-none">
                         </div>
                         <div>
                             <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Password</label>
@@ -362,13 +362,19 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Student Number</label>
-                                <input type="text" id="reg-stdno" required placeholder="CDM-2024-XXXX" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-forest focus:outline-none">
+                                <input type="text" id="reg-stdno" required placeholder="26-10177" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-forest focus:outline-none">
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block text-xs font-bold uppercase text-gray-600 mb-1">School Email</label>
-                            <input type="email" id="reg-email" required placeholder="student@student.cdm.edu.ph" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-forest focus:outline-none">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-600 mb-1">School Email</label>
+                                <input type="email" id="reg-email" required placeholder="student@student.cdm.edu.ph" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-forest focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Work Immersion Hours</label>
+                                <input type="number" id="reg-total-hours" required value="486" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-forest focus:outline-none">
+                            </div>
                         </div>
 
                         <!-- Dropdown Menu for Colegio de Montalban Programs -->
@@ -534,11 +540,15 @@
         function renderScannerAndLiveTablePage() {
             return `
                 <div class="space-y-6">
-                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex justify-between items-center">
+                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
                             <h2 class="text-xl font-extrabold text-forest-dark">On-Campus Live Scanner & Real-Time Log</h2>
                             <p class="text-xs text-gray-500">Scan your student QR code using PC webcam or smartphone camera. Verified timestamps update instantly in the table beside the camera.</p>
                         </div>
+                        <!-- NEW LIVE SCANNER PRINT REPORT BUTTON -->
+                        <button onclick="window.print()" class="bg-forest hover:bg-forest-dark text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                            <i class="fa-solid fa-print"></i> Print Attendance Log Report
+                        </button>
                     </div>
 
                     <!-- Split Screen 2-Column Layout -->
@@ -564,12 +574,12 @@
                         </div>
 
                         <!-- Right: Live Attendance Table Beside Scanner (7 Columns) -->
-                        <div class="lg:col-span-7 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+                        <div id="printable-area" class="lg:col-span-7 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
                             <div class="p-4 bg-forest-light border-b border-gray-200 flex justify-between items-center">
                                 <h3 class="font-bold text-forest-dark text-sm uppercase flex items-center">
                                     <i class="fa-solid fa-table-list mr-2 text-forest"></i> Live Attendance Logs Stream
                                 </h3>
-                                <span class="text-[10px] bg-green-200 text-green-800 font-bold px-2 py-0.5 rounded-full">LIVE AUTO-REFRESH</span>
+                                <span class="text-[10px] bg-green-200 text-green-800 font-bold px-2 py-0.5 rounded-full no-print">LIVE AUTO-REFRESH</span>
                             </div>
                             
                             <div class="overflow-x-auto flex-grow">
@@ -789,7 +799,7 @@
             const modalContainer = document.getElementById('modal-container');
             modalContainer.innerHTML = `
                 <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+                    <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl max-h-[90vh] overflow-y-auto">
                         <div class="flex justify-between items-center border-b pb-3">
                             <h3 class="font-extrabold text-forest-dark text-lg"><i class="fa-solid fa-user-pen mr-2"></i> Update Student Info</h3>
                             <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600 font-bold text-lg">&times;</button>
@@ -808,22 +818,48 @@
                                 <label class="block text-xs font-bold uppercase text-gray-600 mb-1">School Email</label>
                                 <input type="email" id="edit-email" value="${student.email}" required class="w-full px-3 py-2 rounded-xl border text-sm focus:ring-2 focus:ring-forest focus:outline-none">
                             </div>
+                            <!-- UPDATED EDIT PROGRAM DROPDOWN -->
                             <div>
                                 <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Program / Course</label>
-                                <input type="text" id="edit-program" value="${student.program}" required class="w-full px-3 py-2 rounded-xl border text-sm focus:ring-2 focus:ring-forest focus:outline-none">
+                                <select id="edit-program" required class="w-full px-3 py-2 rounded-xl border text-sm bg-white focus:ring-2 focus:ring-forest focus:outline-none">
+                                    <optgroup label="Information Technology & Engineering">
+                                        <option value="BS in Information Technology (BSIT)" ${student.program === 'BS in Information Technology (BSIT)' ? 'selected' : ''}>BS in Information Technology (BSIT)</option>
+                                        <option value="BS in Computer Engineering (BSCpE)" ${student.program === 'BS in Computer Engineering (BSCpE)' ? 'selected' : ''}>BS in Computer Engineering (BSCpE)</option>
+                                    </optgroup>
+                                    <optgroup label="Teacher Education">
+                                        <option value="BSEd in Science" ${student.program === 'BSEd in Science' ? 'selected' : ''}>BSEd in Science</option>
+                                        <option value="BEEd Generalist" ${student.program === 'BEEd Generalist' ? 'selected' : ''}>BEEd Generalist</option>
+                                        <option value="BEEd Early Childhood Education" ${student.program === 'BEEd Early Childhood Education' ? 'selected' : ''}>BEEd Early Childhood Education</option>
+                                        <option value="BTLEd in ICT" ${student.program === 'BTLEd in ICT' ? 'selected' : ''}>BTLEd in ICT</option>
+                                        <option value="Teacher Certificate Program (TCP)" ${student.program === 'Teacher Certificate Program (TCP)' ? 'selected' : ''}>Teacher Certificate Program (TCP)</option>
+                                    </optgroup>
+                                    <optgroup label="Business & Administration">
+                                        <option value="BS in Business Administration (Human Resource Management)" ${student.program === 'BS in Business Administration (Human Resource Management)' ? 'selected' : ''}>BS in Business Administration (Human Resource Management)</option>
+                                        <option value="BS in Entrepreneurship" ${student.program === 'BS in Entrepreneurship' ? 'selected' : ''}>BS in Entrepreneurship</option>
+                                        <option value="BS Office Administration (BSOA)" ${student.program === 'BS Office Administration (BSOA)' ? 'selected' : ''}>BS Office Administration (BSOA)</option>
+                                    </optgroup>
+                                    <optgroup label="Health & Allied Sciences">
+                                        <option value="BS Midwifery" ${student.program === 'BS Midwifery' ? 'selected' : ''}>BS Midwifery</option>
+                                    </optgroup>
+                                </select>
                             </div>
+                            <!-- UPDATED EDIT HOURS (RENDERED & REQUIRED OJT HOURS) -->
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
                                     <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Rendered Hours</label>
                                     <input type="number" id="edit-hours" value="${student.hoursRendered}" required class="w-full px-3 py-2 rounded-xl border text-sm focus:ring-2 focus:ring-forest focus:outline-none">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Account Status</label>
-                                    <select id="edit-status" class="w-full px-3 py-2 rounded-xl border text-sm bg-white focus:ring-2 focus:ring-forest focus:outline-none">
-                                        <option value="approved" ${student.status === 'approved' ? 'selected' : ''}>Approved</option>
-                                        <option value="pending" ${student.status === 'pending' ? 'selected' : ''}>Pending</option>
-                                    </select>
+                                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Required OJT Hours</label>
+                                    <input type="number" id="edit-total-required" value="${student.totalRequired || 486}" required class="w-full px-3 py-2 rounded-xl border text-sm focus:ring-2 focus:ring-forest focus:outline-none">
                                 </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Account Status</label>
+                                <select id="edit-status" class="w-full px-3 py-2 rounded-xl border text-sm bg-white focus:ring-2 focus:ring-forest focus:outline-none">
+                                    <option value="approved" ${student.status === 'approved' ? 'selected' : ''}>Approved</option>
+                                    <option value="pending" ${student.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                </select>
                             </div>
                             <div class="flex gap-2 pt-3 border-t">
                                 <button type="button" onclick="closeModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 rounded-xl text-xs transition">Cancel</button>
@@ -845,6 +881,7 @@
             student.email = document.getElementById('edit-email').value;
             student.program = document.getElementById('edit-program').value;
             student.hoursRendered = parseFloat(document.getElementById('edit-hours').value) || 0;
+            student.totalRequired = parseFloat(document.getElementById('edit-total-required').value) || 486;
             student.status = document.getElementById('edit-status').value;
 
             saveToDB(DB_KEY_STUDENTS, state.students);
@@ -884,6 +921,7 @@
             const name = document.getElementById('reg-name').value;
             const studentNo = document.getElementById('reg-stdno').value;
             const email = document.getElementById('reg-email').value;
+            const totalRequired = parseFloat(document.getElementById('reg-total-hours').value) || 486;
             const program = document.getElementById('reg-program').value;
             const password = document.getElementById('reg-pass').value;
             const confirmPassword = document.getElementById('reg-pass-confirm').value;
@@ -902,7 +940,7 @@
                 password,
                 status: 'pending',
                 hoursRendered: 0,
-                totalRequired: 486,
+                totalRequired: totalRequired,
                 qrToken: 'QR-' + studentNo.replace(/[^A-Z0-9]/gi, '')
             };
 
