@@ -156,7 +156,7 @@
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pt-6 border-t border-forest/60 flex flex-col md:flex-row justify-between items-center text-xs text-gray-400">
             <p>&copy; 2026 Colegio de Montalban. All Rights Reserved.</p>
-            <p class="mt-2 md:mt-0">OJT Attendance System v4.5 • Supabase Cloud Database Connected</p>
+            <p class="mt-2 md:mt-0">OJT Attendance System v4.7 • 3-Second Anti-Duplicate Scanner Lock</p>
         </div>
     </footer>
 
@@ -166,7 +166,14 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_q196dsImabrOOFNfrmpPaA_ivwfQYrd';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const todayStr = new Date().toISOString().split('T')[0];
+        // Helper to always get local YYYY-MM-DD for accurate daily resets
+        function getLocalTodayStr() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
 
         const state = {
             currentRoute: 'home',
@@ -174,7 +181,8 @@
             students: [],
             attendanceLogs: [],
             isEmergencyMode: false,
-            emergencyReason: 'Medical Emergency'
+            emergencyReason: 'Medical Emergency',
+            isProcessingScan: false
         };
 
         const router = {
@@ -229,7 +237,8 @@
 
                 const { data: logData, error: logError } = await supabaseClient
                     .from('attendance_logs')
-                    .select('*');
+                    .select('*')
+                    .order('id', { ascending: true });
 
                 if (!logError && logData) {
                     state.attendanceLogs = logData.map(l => ({
@@ -237,7 +246,7 @@
                         studentName: l.student_name,
                         studentNo: l.student_no,
                         program: l.program || 'BSCpE',
-                        date: l.work_date || todayStr,
+                        date: l.work_date || getLocalTodayStr(),
                         timeIn: l.time_in,
                         timeOut: l.time_out,
                         status: l.status || 'Present',
@@ -351,7 +360,6 @@
             `;
         }
 
-        // --- ALL 15 FEATURES DEDICATED SHOWCASE PAGE ---
         function renderFeaturesPage() {
             return `
                 <div class="space-y-10 max-w-6xl mx-auto">
@@ -363,7 +371,6 @@
                         <p class="text-gray-600 text-sm">Supabase-powered real-time cloud attendance tracking.</p>
                     </div>
 
-                    <!-- SECTION 1: CORE SYSTEM & SCANNER -->
                     <div class="space-y-4">
                         <h3 class="text-xl font-extrabold text-forest-dark border-b pb-2 flex items-center">
                             <i class="fa-solid fa-qrcode mr-2 text-schoolYellow"></i> Core System & Scanner Features (1 to 5)
@@ -382,7 +389,7 @@
                             <div class="group bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-4 hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
                                 <div class="w-12 h-12 rounded-xl bg-forest-light text-forest flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-shield-halved"></i></div>
                                 <h4 class="font-extrabold text-forest-dark text-base">3. 1-Minute Double-Scan Guard</h4>
-                                <p class="text-xs text-gray-500">Security gate blocking immediate checkout attempts under 60 seconds to prevent duplicates.</p>
+                                <p class="text-xs text-gray-500">Security gate blocking immediate checkout attempts under 60 seconds and locking single-row daily logs.</p>
                             </div>
                             <div class="group bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-4 hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
                                 <div class="w-12 h-12 rounded-xl bg-forest-light text-forest flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-triangle-exclamation"></i></div>
@@ -397,7 +404,6 @@
                         </div>
                     </div>
 
-                    <!-- SECTION 2: CALCULATION, DATABASE & STUDENT FEATURES -->
                     <div class="space-y-4 pt-4">
                         <h3 class="text-xl font-extrabold text-forest-dark border-b pb-2 flex items-center">
                             <i class="fa-solid fa-database mr-2 text-schoolYellow"></i> Calculation, Database & Student Features (6 to 11)
@@ -436,7 +442,6 @@
                         </div>
                     </div>
 
-                    <!-- SECTION 3: ADMIN, REPORTING & UI FEATURES -->
                     <div class="space-y-4 pt-4">
                         <h3 class="text-xl font-extrabold text-forest-dark border-b pb-2 flex items-center">
                             <i class="fa-solid fa-shield-dog mr-2 text-schoolYellow"></i> Admin, Reporting & UI Features (12 to 15)
@@ -445,7 +450,7 @@
                             <div class="group bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-4 hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
                                 <div class="w-12 h-12 rounded-xl bg-forest-light text-forest flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-user-shield"></i></div>
                                 <h4 class="font-extrabold text-forest-dark text-base">12. Admin Management Suite</h4>
-                                <p class="text-xs text-gray-500">Password-protected admin area (admin123) to manage student records.</p>
+                                <p class="text-xs text-gray-500">Password-protected admin area (admin123) to edit or delete student records.</p>
                             </div>
                             <div class="group bg-white rounded-2xl p-6 border border-gray-200 shadow-sm space-y-4 hover:-translate-y-2 hover:shadow-xl transition-all duration-300">
                                 <div class="w-12 h-12 rounded-xl bg-forest-light text-forest flex items-center justify-center text-xl font-bold"><i class="fa-solid fa-file-csv"></i></div>
@@ -468,7 +473,6 @@
             `;
         }
 
-        // --- OFFICIAL 5-MEMBER TEAM ABOUT PAGE DESIGN ---
         function renderAboutPage() {
             return `
                 <div class="space-y-8 max-w-6xl mx-auto">
@@ -668,7 +672,7 @@
                     <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-6">
                         <div class="space-y-2 text-center md:text-left">
                             <span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">
-                                Status: APPROVED (Supabase Cloud)
+                                Status: ${student.status.toUpperCase()} (Supabase Cloud)
                             </span>
                             <h2 class="text-2xl font-extrabold text-forest-dark">${student.name}</h2>
                             <p class="text-xs text-gray-500 font-semibold">${student.studentNo} • ${student.program}</p>
@@ -766,12 +770,13 @@
         }
 
         function renderScannerAndLiveTablePage() {
+            const todayStr = getLocalTodayStr();
             return `
                 <div class="space-y-6">
                     <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                         <div>
-                            <h2 class="text-xl font-extrabold text-forest-dark">On-Campus Live Scanner & Supabase Logs</h2>
-                            <p class="text-xs text-gray-500">Scan QR code using webcam or manual entry. Pushes records directly to Supabase cloud tables.</p>
+                            <h2 class="text-xl font-extrabold text-forest-dark">On-Campus Live Scanner & Daily Log (${todayStr})</h2>
+                            <p class="text-xs text-gray-500">Live table resets automatically every new day while preserving all historical DTR records in Supabase.</p>
                         </div>
                         <button onclick="window.print()" class="bg-forest hover:bg-forest-dark text-white px-4 py-2 rounded-xl text-xs font-bold transition transform active:scale-95 duration-150 flex items-center gap-1.5 shadow-sm">
                             <i class="fa-solid fa-print"></i> Print Attendance Log Report
@@ -831,7 +836,7 @@
                         <div id="printable-area" class="lg:col-span-7 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
                             <div class="p-4 bg-forest-light border-b border-gray-200 flex justify-between items-center">
                                 <h3 class="font-bold text-forest-dark text-sm uppercase flex items-center">
-                                    <i class="fa-solid fa-database mr-2 text-forest"></i> Supabase Attendance Stream
+                                    <i class="fa-solid fa-calendar-day mr-2 text-forest"></i> Today's Live Attendance (${todayStr})
                                 </h3>
                                 <button onclick="triggerManualCsvExport()" class="bg-green-100 hover:bg-green-200 text-green-800 text-[11px] font-bold px-3 py-1 rounded-lg transition transform active:scale-95 duration-150 no-print">
                                     <i class="fa-solid fa-file-csv mr-1"></i> Manual CSV Backup
@@ -868,11 +873,16 @@
             renderApp();
         }
 
+        // Renders ONLY today's attendance records so every new day starts clean and empty
         function renderLiveTableRows() {
-            if (!state.attendanceLogs.length) {
-                return `<tr><td colspan="8" class="p-4 text-center text-gray-400">No attendance logs in Supabase yet.</td></tr>`;
+            const todayStr = getLocalTodayStr();
+            const todaysLogs = state.attendanceLogs.filter(log => log.date === todayStr);
+
+            if (!todaysLogs.length) {
+                return `<tr><td colspan="8" class="p-6 text-center text-gray-400 font-medium">No attendance logs recorded yet for today (${todayStr}).</td></tr>`;
             }
-            return state.attendanceLogs.slice().reverse().map(log => `
+
+            return todaysLogs.slice().reverse().map(log => `
                 <tr class="hover:bg-gray-50 transition">
                     <td class="p-3 font-mono text-gray-600">${log.studentNo}</td>
                     <td class="p-3 font-bold text-gray-800">${log.studentName}</td>
@@ -913,43 +923,82 @@
         }
 
         async function processQrScanToken(token) {
-            let student = state.students.find(s => s.qrToken === token || s.studentNo.toLowerCase() === token.toLowerCase());
-            const feedback = document.getElementById('scan-feedback');
-            
-            if (!student) {
-                feedback.classList.remove('hidden');
-                feedback.className = "p-3 rounded-xl text-center text-xs font-bold bg-red-100 text-red-800 border border-red-300";
-                feedback.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Unrecognized QR / Student ID in database!`;
-                return;
-            }
+            // Instant client-side lock to block rapid duplicate frames from phone cameras
+            if (state.isProcessingScan) return;
+            state.isProcessingScan = true;
 
-            if (student.status !== 'approved') {
-                feedback.classList.remove('hidden');
-                feedback.className = "p-3 rounded-xl text-center text-xs font-bold bg-yellow-100 text-yellow-800 border border-yellow-300";
-                feedback.innerHTML = `<i class="fa-solid fa-hourglass-half mr-1"></i> Account Pending Approval by Admin.`;
-                return;
-            }
+            try {
+                let student = state.students.find(s => s.qrToken === token || s.studentNo.toLowerCase() === token.toLowerCase());
+                const feedback = document.getElementById('scan-feedback');
+                
+                if (!student) {
+                    feedback.classList.remove('hidden');
+                    feedback.className = "p-3 rounded-xl text-center text-xs font-bold bg-red-100 text-red-800 border border-red-300";
+                    feedback.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Unrecognized QR / Student ID in database!`;
+                    return;
+                }
 
-            const today = new Date().toISOString().split('T')[0];
-            const nowTimestamp = new Date();
-            const timeNowStr = nowTimestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                if (student.status !== 'approved') {
+                    feedback.classList.remove('hidden');
+                    feedback.className = "p-3 rounded-xl text-center text-xs font-bold bg-yellow-100 text-yellow-800 border border-yellow-300";
+                    feedback.innerHTML = `<i class="fa-solid fa-hourglass-half mr-1"></i> Account Pending Approval by Admin.`;
+                    return;
+                }
 
-            let existingLog = state.attendanceLogs.find(l => l.studentNo === student.studentNo && l.date === today);
+                const today = getLocalTodayStr();
+                const nowTimestamp = new Date();
+                const timeNowStr = nowTimestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-            if (state.isEmergencyMode) {
-                if (existingLog) {
-                    const elapsedMs = nowTimestamp - new Date(existingLog.rawTimeIn || nowTimestamp.getTime());
-                    const calculatedHours = Math.max(0.1, Math.round((elapsedMs / (1000 * 60 * 60)) * 100) / 100);
+                // Query Supabase directly for any record for this student today
+                const { data: existingRows, error: fetchError } = await supabaseClient
+                    .from('attendance_logs')
+                    .select('*')
+                    .eq('student_no', student.studentNo)
+                    .eq('work_date', today);
 
-                    await supabaseClient.from('attendance_logs')
-                        .update({ 
-                            time_out: timeNowStr + " (Emergency)", 
-                            status: `Emergency (${state.emergencyReason})`,
-                            hours: calculatedHours
-                        })
-                        .eq('student_no', student.studentNo)
-                        .eq('work_date', today);
-                } else {
+                if (fetchError) {
+                    console.error("Supabase lookup error:", fetchError);
+                    return;
+                }
+
+                const existingLog = (existingRows && existingRows.length > 0) ? existingRows[0] : null;
+                const targetRowId = existingLog ? existingLog.id : null;
+
+                if (state.isEmergencyMode) {
+                    if (existingLog) {
+                        const rawIn = existingLog.raw_time_in || nowTimestamp.getTime();
+                        const elapsedMs = nowTimestamp.getTime() - rawIn;
+                        const calculatedHours = Math.max(0.1, Math.round((elapsedMs / (1000 * 60 * 60)) * 100) / 100);
+
+                        await supabaseClient.from('attendance_logs')
+                            .update({ 
+                                time_out: timeNowStr + " (Emergency)", 
+                                status: `Emergency (${state.emergencyReason})`,
+                                hours: calculatedHours
+                            })
+                            .eq('id', targetRowId);
+                    } else {
+                        await supabaseClient.from('attendance_logs').insert([
+                            {
+                                student_no: student.studentNo,
+                                student_name: student.name,
+                                program: student.program,
+                                work_date: today,
+                                time_in: timeNowStr,
+                                time_out: timeNowStr + " (Emergency)",
+                                status: `Emergency (${state.emergencyReason})`,
+                                hours: 0.1,
+                                raw_time_in: nowTimestamp.getTime()
+                            }
+                        ]);
+                    }
+
+                    feedback.classList.remove('hidden');
+                    feedback.className = "p-3 rounded-xl text-center text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300";
+                    feedback.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> EMERGENCY logged for ${student.name} (${state.emergencyReason})`;
+
+                } else if (!existingLog) {
+                    // FIRST SCAN -> INSERT TIME-IN
                     await supabaseClient.from('attendance_logs').insert([
                         {
                             student_no: student.studentNo,
@@ -957,71 +1006,60 @@
                             program: student.program,
                             work_date: today,
                             time_in: timeNowStr,
-                            time_out: timeNowStr + " (Emergency)",
-                            status: `Emergency (${state.emergencyReason})`,
-                            hours: 0.1,
+                            status: 'Present',
+                            hours: 0.0,
                             raw_time_in: nowTimestamp.getTime()
                         }
                     ]);
-                }
 
-                feedback.classList.remove('hidden');
-                feedback.className = "p-3 rounded-xl text-center text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300";
-                feedback.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> EMERGENCY logged for ${student.name} (${state.emergencyReason})`;
-
-            } else if (!existingLog) {
-                await supabaseClient.from('attendance_logs').insert([
-                    {
-                        student_no: student.studentNo,
-                        student_name: student.name,
-                        program: student.program,
-                        work_date: today,
-                        time_in: timeNowStr,
-                        status: 'Present',
-                        hours: 0.0,
-                        raw_time_in: nowTimestamp.getTime()
-                    }
-                ]);
-
-                feedback.classList.remove('hidden');
-                feedback.className = "p-3 rounded-xl text-center text-xs font-bold bg-green-100 text-green-800 border border-green-300";
-                feedback.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> TIME-IN Recorded to Supabase for ${student.name} at ${timeNowStr}`;
-
-            } else if (!existingLog.timeOut) {
-                const elapsedMs = nowTimestamp - new Date(existingLog.rawTimeIn || nowTimestamp.getTime());
-                const elapsedSeconds = Math.floor(elapsedMs / 1000);
-
-                if (elapsedSeconds < 60) {
-                    const remainingSecs = 60 - elapsedSeconds;
                     feedback.classList.remove('hidden');
-                    feedback.className = "p-3 rounded-xl text-center text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300";
-                    feedback.innerHTML = `<i class="fa-solid fa-clock mr-1"></i> <strong>Double-Scan Guard:</strong> Please render at least 1 minute before logging out (${remainingSecs}s remaining).`;
-                    return;
+                    feedback.className = "p-3 rounded-xl text-center text-xs font-bold bg-green-100 text-green-800 border border-green-300";
+                    feedback.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> TIME-IN Recorded to Supabase for ${student.name} at ${timeNowStr}`;
+
+                } else if (!existingLog.time_out) {
+                    // SECOND SCAN -> CHECK 1-MINUTE GUARD & UPDATE TIME-OUT
+                    const rawIn = existingLog.raw_time_in || nowTimestamp.getTime();
+                    const elapsedMs = nowTimestamp.getTime() - rawIn;
+                    const elapsedSeconds = Math.floor(elapsedMs / 1000);
+
+                    if (elapsedSeconds < 60) {
+                        const remainingSecs = 60 - elapsedSeconds;
+                        feedback.classList.remove('hidden');
+                        feedback.className = "p-3 rounded-xl text-center text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300";
+                        feedback.innerHTML = `<i class="fa-solid fa-clock mr-1"></i> <strong>Double-Scan Guard:</strong> Please render at least 1 minute before logging out (${remainingSecs}s remaining).`;
+                        return;
+                    }
+
+                    const calculatedHours = Math.max(0.01, Math.round((elapsedMs / (1000 * 60 * 60)) * 100) / 100);
+
+                    await supabaseClient.from('attendance_logs')
+                        .update({ 
+                            time_out: timeNowStr, 
+                            hours: calculatedHours,
+                            status: 'Present'
+                        })
+                        .eq('id', targetRowId);
+
+                    feedback.classList.remove('hidden');
+                    feedback.className = "p-3 rounded-xl text-center text-xs font-bold bg-blue-100 text-blue-800 border border-blue-300";
+                    feedback.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> TIME-OUT Recorded to Supabase for ${student.name} (${calculatedHours} hrs)`;
+                } else {
+                    // ALREADY COMPLETED TODAY -> BLOCK DUPLICATES
+                    feedback.classList.remove('hidden');
+                    feedback.className = "p-3 rounded-xl text-center text-xs font-bold bg-purple-100 text-purple-800 border border-purple-300";
+                    feedback.innerHTML = `<i class="fa-solid fa-circle-info mr-1"></i> Attendance already completed for ${student.name} today.`;
                 }
 
-                const calculatedHours = Math.max(0.01, Math.round((elapsedMs / (1000 * 60 * 60)) * 100) / 100);
+                await syncDatabaseFromSupabase();
+                const tbody = document.getElementById('live-attendance-tbody');
+                if (tbody) tbody.innerHTML = renderLiveTableRows();
 
-                await supabaseClient.from('attendance_logs')
-                    .update({ 
-                        time_out: timeNowStr, 
-                        hours: calculatedHours,
-                        status: 'Present'
-                    })
-                    .eq('student_no', student.studentNo)
-                    .eq('work_date', today);
-
-                feedback.classList.remove('hidden');
-                feedback.className = "p-3 rounded-xl text-center text-xs font-bold bg-blue-100 text-blue-800 border border-blue-300";
-                feedback.innerHTML = `<i class="fa-solid fa-circle-check mr-1"></i> TIME-OUT Recorded to Supabase for ${student.name} (${calculatedHours} hrs)`;
-            } else {
-                feedback.classList.remove('hidden');
-                feedback.className = "p-3 rounded-xl text-center text-xs font-bold bg-purple-100 text-purple-800 border border-purple-300";
-                feedback.innerHTML = `<i class="fa-solid fa-circle-info mr-1"></i> Attendance already completed for ${student.name} today.`;
+            } finally {
+                // Extended 3-second cooldown to allow phone camera to move away from the QR code
+                setTimeout(() => {
+                    state.isProcessingScan = false;
+                }, 3000);
             }
-
-            await syncDatabaseFromSupabase();
-            const tbody = document.getElementById('live-attendance-tbody');
-            if (tbody) tbody.innerHTML = renderLiveTableRows();
         }
 
         function handleManualIdSubmit() {
@@ -1042,6 +1080,7 @@
                 return;
             }
 
+            const todayStr = getLocalTodayStr();
             let csvContent = "data:text/csv;charset=utf-8,id,name,program,date,time-in,time-out,status,rendered hours\n";
             state.attendanceLogs.forEach(log => {
                 csvContent += `"${log.studentNo}","${log.studentName}","${log.program}","'${log.date || todayStr}","${log.timeIn || ''}","${log.timeOut || ''}","${log.status}","${log.hours || 0}"\n`;
@@ -1224,7 +1263,7 @@
                                                 <td class="p-4 font-bold text-gray-800">${s.name}</td>
                                                 <td class="p-4 text-gray-600">${s.studentNo}</td>
                                                 <td class="p-4 text-gray-600 text-xs">${s.program}</td>
-                                                <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">${s.status.toUpperCase()}</span></td>
+                                                <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-bold ${s.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">${s.status.toUpperCase()}</span></td>
                                                 <td class="p-4 font-bold text-forest">${actualHrs} / ${s.totalRequired} hrs</td>
                                                 <td class="p-4 no-print text-right space-x-2">
                                                     <button onclick="openEditStudentModal('${s.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg text-xs font-bold transition">
